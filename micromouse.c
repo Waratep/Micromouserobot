@@ -10,32 +10,93 @@
 #define isEmpty(X)    (X->size == 0)
 #define isFull(X)     (X->size == MAX_PEG_SIZE)
 
+void beep(int i);
+
 int Ultra_L = 0 , state_L = 0;
 int Ultra_R = 0 , state_R = 0;
 int Ultra_F = 0 , state_F = 0;
 
-int maze[9][9] = {  { 8,7,6,5,4,5,6,7,8 },
-										{ 7,6,5,4,3,4,5,6,7 },
-										{ 6,5,4,3,2,3,4,5,6 },
-										{ 5,4,3,2,1,2,3,4,5 },
-										{ 4,3,2,1,0,1,2,3,4 },
-										{ 5,4,3,2,1,2,3,4,5 },
-										{ 6,5,4,3,2,3,4,5,6 },
-										{ 7,6,5,4,3,4,5,6,7 },
-										{ 8,7,6,5,4,5,6,7,8 }
-};
+int wallhorimem[10][9] =
+					 {{1,1,1,1, 1,1,1,1,1},   //0,0   0,1
+		        {0,0,0,0, 0,0,0,0,0},   //1,0
+		        {0,0,0,0, 0,0,0,0,0},
+					  {0,0,0,0, 0,0,0,0,0},
+					  {0,0,0,0, 0,0,0,0,0},
+					  {0,0,0,0, 0,0,0,0,0},
+					  {0,0,0,0, 0,0,0,0,0},
+					  {0,0,0,0, 0,0,0,0,0},
+					  {0,0,0,0, 0,0,0,0,0},
+		        {1,1,1,1, 1,1,1,1,1}};
 
-int wall[10][10] = { {1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1},
-		 	 						{1 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 1},
-									{1 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 1},
-									{1 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 1},
-									{1 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 1},
-									{1 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 1},
-									{1 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 1},
-									{1 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 1},
-									{1 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 1},
-									{1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1}
-};
+int wallvertmem[9][10] =
+					 {{1,0,0,0,0 , 0,0,0,0,1},   //0,0   0,1
+		        {1,0,0,0,0 , 0,0,0,0,1},   //1,0
+		        {1,0,0,0,0 , 0,0,0,0,1},
+					  {1,0,0,0,0 , 0,0,0,0,1},
+					  {1,0,0,0,0 , 0,0,0,0,1},
+					  {1,0,0,0,0 , 0,0,0,0,1},
+					  {1,0,0,0,0 , 0,0,0,0,1},
+					  {1,0,0,0,0 , 0,0,0,0,1},
+					  {1,0,0,0,0 , 0,0,0,0,1}};
+
+int wallhori[10][9] =
+					 {{1,1,1,1, 1,1,1,1,1},   //0,0   0,1
+		        {0,0,1,0, 1,0,1,0,0},   //1,0
+		        {0,0,1,0, 1,1,0,0,0},
+					  {0,0,0,0, 0,1,0,1,0},
+					  {0,0,1,0, 0,1,0,0,0},
+					  {0,0,0,1, 1,1,1,0,1},
+					  {0,0,1,1, 1,1,0,1,0},
+					  {0,0,0,0, 0,0,0,1,0},
+					  {0,0,0,0, 0,0,0,1,0},
+		        {1,1,1,1, 1,1,1,1,1}};
+
+int wallvert[9][10] =
+					 {{1,0,0,1,0 , 0,1,0,0,1},   //0,0   0,1
+		        {1,0,1,0,1 , 0,0,1,0,1},   //1,0
+		        {1,0,0,1,0 , 0,0,1,0,1},
+					  {1,0,0,1,1 , 1,1,0,1,1},
+					  {1,0,1,0,1 , 0,0,1,1,1},
+					  {1,0,1,0,0 , 0,0,0,0,1},
+					  {1,0,0,0,0 , 0,1,1,1,1},
+					  {1,0,0,0,0 , 0,1,1,1,1},
+					  {1,0,0,0,0 , 0,1,0,0,1}};
+
+int car[9][9] =
+			 {{6,5,4,3,4,5,6,7,8},   //0,0   0,1
+		    {5,4,3,4,3,4,5,6,7},   //1,0
+				{4,3,2,1,2,3,4,5,6},
+				{3,2,1,0,1,2,3,4,5},
+				{4,3,2,1,2,3,4,5,6},
+				{5,4,3,2,3,4,5,6,7},
+				{6,5,4,3,4,5,6,7,8},
+				{7,6,5,4,5,6,7,8,9},
+				{8,7,6,5,6,7,8,9,10}};
+
+int car1[9][9] =
+			 {{16,15,14,13,12,11,10,9,8},   //0,0   0,1
+		    {15,14,13,12,11,10, 9,8,7},   //1,0
+				{14,13,12,11,10, 9, 8,7,6},
+				{13,12,11,10, 9, 8, 7,6,5},
+				{12,11,10, 9, 8, 7, 6,5,4},
+				{11,10, 9, 8, 7, 6, 5,4,3},
+				{10, 9, 8, 7, 6, 5, 4,3,2},
+				{9,  8, 7, 6, 5, 4, 3,2,1},
+				{8,  7, 6, 5, 4, 3, 2,1,0}};
+
+int x=8,y=8;
+int endx=3,endy=3;
+
+int pattern = 0;
+int direction = 0;
+//#front=1 left=2  right=4  front+left+right=7
+//#front+left=3 front+right=5 left+right=6
+void printwall();
+void checkdirection();
+void min2way(int a,int b);
+void checkpatndi();
+void min3way(int a,int b, int c);
+
 
 struct tStackElement
 {
@@ -88,7 +149,7 @@ void forward(int i){
 	int error , last_error , sum_error = 0;
 	int encoder_L =  0;
 	int encoder_R = 0;
-	int avg_encoder = 0
+	int avg_encoder = 0;
 	int pid = 0;
 
 	while(avg_encoder < 620){
@@ -102,7 +163,7 @@ void forward(int i){
 		if(i == 6){
 			error = (Ultra_L - Ultra_R) >= 1 ? 1:error;
 			error = (Ultra_L - Ultra_R) < 0 ? -1:error;
-			pid = gyro*1 + error*1.5;
+			pid = gyro*1 + error * 0.5;
 		}else{
 			pid = 0;
 		}
@@ -121,10 +182,10 @@ void forward(int i){
 }
 
 void turn_left(){
+	resetGyro(S3);
 	int gyro,pid;
-
 	for(int i = 0 ; i < 5000 ; i++){
-		gyro = 90 + getGyroDegrees(S3);
+		gyro = 86 + getGyroDegrees(S3);
 		pid = gyro*0.5;
 		setMotorSpeed(motorA, pid);
 		setMotorSpeed(motorD, pid*(-1));
@@ -133,46 +194,14 @@ void turn_left(){
 }
 
 void turn_right(){
+	resetGyro(S3);
 	int gyro,pid;
 	for(int i = 0 ; i < 5000 ; i++){
-		gyro = -90 + getGyroDegrees(S3);
+		gyro = -86 + getGyroDegrees(S3);
 		pid = gyro*0.5;
 		setMotorSpeed(motorA, pid);
 		setMotorSpeed(motorD, pid*(-1));
 	}
-}
-int check_pattern(int i , int j , int k){
-
-		if(i < 12){
-			state_L = 1;
-		}
-		if(j < 12){
-			state_R = 1;
-		}
-		if(k < 15){
-			state_F = 1;
-		}
-
-		if(!state_L && !state_F && !state_R){
-			return 0;
-		}else if(!state_L && state_F && !state_R){
-			return 1;
-		}else if(state_L && !state_F && !state_R){
-		  return 2;
-		}else if(!state_L && !state_F && state_R){
-			return 4;
-  	}else if(state_L && state_F && !state_R){
-		  return 3;
-		}else if(!state_L && state_F && state_R){
-			return 5;
-		}else if(state_L && !state_F && state_R){
-			return 6;
-		}else{
-			return 7;
-		}
-		state_L = 0;
-		state_R = 0;
-		state_F = 0;
 }
 
 
@@ -183,36 +212,329 @@ task main()
 	initStack(&stacktwo);
 	resetGyro(S3);
 
-	while(1){
-
-		setMotorSpeed(motorC, 100);
-
-		Ultra_R = SensorValue[S1];
+	while(x!=endx||y!=endy){
+		beep(1);
+    Ultra_R = SensorValue[S1];
 		Ultra_L = SensorValue[S4];
 		Ultra_F = SensorValue[S2];
-
-		int i = check_pattern(Ultra_L,Ultra_R,Ultra_F);
-		displayTextLine(0,"%d",check_pattern(Ultra_L,Ultra_R,Ultra_F));
-
-		if(i == 6 || i == 2){
-			forward(i);
-			playTone(4000, 10);
-		}else if(i == 3){
-			turn_right();
-			forward(i);
-			playTone(4000, 10);
-		}else if(i == 5 || i == 0){
-			turn_left();
-			forward(i);
-			playTone(4000, 10);
-		}
-		state_L = 0;
-		state_R = 0;
-		state_F = 0;
-
+		//int i = check_pattern(Ultra_L,Ultra_R,Ultra_F);
+		//displayTextLine(0,"%d",check_pattern(Ultra_L,Ultra_R,Ultra_F));
+		pattern=0;
+		checkdirection();
+		checkpatndi();
 	}
 
-	//right();
+	x=3;
+	y=3;
+	endx=8;
+	endy=8;
+
+	for(int i = 0 ; i < 9 ; i++){
+		for(int j = 0; j < 9 ; j++){
+			car[i][j] = car1[i][j];
+		}
+	}
+
+	while(x!=endx||y!=endy){
+		beep(1);
+    Ultra_R = SensorValue[S1];
+		Ultra_L = SensorValue[S4];
+		Ultra_F = SensorValue[S2];
+		//int i = check_pattern(Ultra_L,Ultra_R,Ultra_F);
+		//displayTextLine(0,"%d",check_pattern(Ultra_L,Ultra_R,Ultra_F));
+		pattern=0;
+		checkdirection();
+		checkpatndi();
+	}
+
+	turn_left();
+	turn_left();
+	beep(10);
+
+
 	////////////////////////////////////////////
 
+}
+
+
+void checkdirection(){
+
+	Ultra_R = SensorValue[S1];
+	Ultra_L = SensorValue[S4];
+	Ultra_F = SensorValue[S2];
+
+	switch(direction){
+		case 0 : //north
+				if(Ultra_F < 14) {
+					//printf("0 : have a front wall\n");
+					wallhorimem[x][y] = 1;
+					pattern+=1 ;   //#front
+					setMotorSpeed(motorC, 100);
+					setMotorSpeed(motorB, 100);
+					sleep(100);
+					setMotorSpeed(motorC, 0);
+					setMotorSpeed(motorB, 0);
+					sleep(100);
+
+				}
+				sleep(200);
+				if(Ultra_L < 14){
+					//printf("0 : have a left wall\n");
+					wallvertmem[x][y] = 1;
+					pattern+=2 ;   //#left
+					setMotorSpeed(motorB, 100);
+					sleep(100);
+					setMotorSpeed(motorB, 0);
+					sleep(100);
+				}
+				sleep(200);
+				if(Ultra_R < 14){
+					//printf("0 : have a right wall\n");
+					wallvertmem[x][y+1] = 1;
+					pattern+=4 ;   //#right
+					setMotorSpeed(motorC, 100);
+					sleep(100);
+					setMotorSpeed(motorC, 0);
+					sleep(100);
+				}sleep(200); break;
+		case 1 : //east
+				if(Ultra_F < 14) {
+					//printf("1 : have a front wall\n");
+					wallvertmem[x][y] = 1;
+					pattern+=1 ;   //#front
+				}
+				if(Ultra_L < 14){
+					//printf("1 : have a left wall\n");
+					wallhorimem[x+1][y] = 1;
+					pattern+=2 ;   //#left
+				}
+				if(Ultra_R < 14){
+					//printf("1 : have a right wall\n");
+					wallhorimem[x][y] = 1;
+					pattern+=4 ;   //#right
+				} break;
+		case 2 : //west
+				if(Ultra_F < 14) {
+					//printf("2 : have a front wall\n");
+					wallvertmem[x][y+1] = 1;
+					pattern+=1 ;   //#front
+				}
+				if(Ultra_L < 14){
+					//printf("2 : have a left wall\n");
+					wallhorimem[x][y] = 1;
+					pattern+=2 ;   //#left
+				}
+				if(Ultra_R < 14){
+					//printf("2 : have a right wall\n");
+					wallhorimem[x+1][y] = 1;
+					pattern+=4 ;   //#right
+				} break;
+		default	: //south
+				if(Ultra_F < 14) {
+					//printf("3 : have a front wall\n");
+					wallhorimem[x+1][y] = 1;
+					pattern+=1 ;   //#front
+				}
+				if(Ultra_L < 14){
+					//printf("3 : have a left wall\n");
+					wallvertmem[x][y+1] = 1;
+					pattern+=2 ;   //#left
+				}
+				if(Ultra_R < 14){
+					//printf("3 : have a right wall\n");
+					wallvertmem[x][y] = 1;
+					pattern+=4 ;   //#right
+				} break;
+	}
+}
+
+void beep(int i){
+	for(int j = -1; j < i ; j++){
+		playTone(4000, 10);
+		sleep(100);
+	}
+}
+
+void min2way(int a,int b){
+	if(a<=b){
+		switch(direction){
+			case 0:		//direction = 0
+				//beep(1);sleep(100);
+				switch(pattern){
+					//beep(pattern);
+					case 1: turn_left(); forward(pattern); y--;	direction = 1;	break;//left,right
+					case 2: forward(pattern);	 x--;	direction = 0;	break;//front,right
+					case 6:  forward(pattern); x--; direction = 0; break;
+					default: forward(pattern);	 x--;	direction = 0;	break;//front,left
+				}break;
+			case 1:		//direction = 1
+				//beep(2);sleep(100);
+				switch(pattern){
+					//beep(pattern);
+					case 1: turn_left(); forward(pattern);	 x++;	direction = 3;	break;//left,right
+					case 2: forward(pattern);	 y--;	direction = 1;	break;//front,right
+					case 6: forward(pattern); y--; direction = 1;  break;
+					default: forward(pattern);	 y--;	direction = 1;	break;//front,left
+				}break;
+			case 2:		//direction = 2
+				//beep(3);sleep(100);
+				switch(pattern){
+					//beep(pattern);
+					case 1: turn_left(); forward(pattern);	 x--;	direction = 0;	break;//left,right
+					case 2: forward(pattern);	 y++;	direction = 2;	break;//front,right
+						case 6:  forward(pattern);y++; direction = 2; break;
+					default: forward(pattern);	 y++;	direction = 2;	break;//front,left
+				}break;
+			default:		//direction = 3
+				//beep(4);sleep(100);
+				switch(pattern){
+					//beep(pattern);
+					case 1: turn_left(); forward(pattern);  y++;	direction = 2;	break;//left,right
+					case 2: forward(pattern);	 x++;	direction = 3;	break;//front,right
+					case 6: forward(pattern);x++; direction = 3;  break;
+					default: forward(pattern);	 x++;	direction = 3;	break;//front,left
+				}break;
+		}
+
+	}else {
+		switch(direction){
+			case 0:		//direction = 0
+				//beep(5);sleep(100);
+				switch(pattern){
+					//beep(pattern);
+					case 1: turn_right();	forward(pattern); y++;	direction = 2;	break;//left,right
+					case 2: turn_right();	forward(pattern); y++;	direction = 2;	break;//front,right
+					case 6: turn_left();turn_left();forward(pattern); x++; direction = 3; break;
+					default: turn_left();	forward(pattern); y--;	direction = 0;	break;//front,left
+				}break;
+			case 1:		//direction = 1
+				//beep(6);sleep(100);
+				switch(pattern){
+					//beep(pattern);
+					case 1: turn_right();	forward(pattern); x--;	direction = 0;	break;//left,right
+					case 2: turn_right();	forward(pattern); x--;	direction = 0;	break;//front,right
+					case 6: turn_left();turn_left();forward(pattern); y++; direction = 2; break;
+					default: turn_left();	forward(pattern); x++;	direction = 3;	break;//front,left
+				}break;
+			case 2:		//direction = 2
+				//beep(7);sleep(100);
+				switch(pattern){
+					//beep(pattern);
+					case 1: turn_right();	forward(pattern); x++;	direction = 3;	break;//left,right
+					case 2: turn_right(); forward(pattern);	 x++;	direction = 3;	break;//front,right
+					case 6: turn_left();turn_left();forward(pattern); y--; direction = 1; break;
+					default: turn_left();	forward(pattern); x--;	direction = 0;	break;//front,left
+				}break;
+			default:		//direction = 3
+				//beep(8);sleep(100);
+				switch(pattern){
+					//beep(pattern);
+					case 1: turn_right();	forward(pattern); y--;	direction = 1;	break;//left,right
+					case 2: turn_right();	forward(pattern); y--;	direction = 1;	break;//front,right
+					case 6: turn_left();turn_left();forward(pattern); x--; direction = 0; break
+					default: turn_left();	forward(pattern); y++;	direction = 2;	break;//front,left
+				}break;
+		}
+	}
+}
+
+void min3way(int a ,int b,int c){ //front,left,right
+	if(a!=b && a!=c && b!=c){
+		if(a<b && a<c){//go front
+			switch(direction){
+				case 0: //printf("0 : ");//north
+						forward(pattern); 		x--;	direction = 0;	break;
+				case 1: //printf("1 : ");//east
+						forward(pattern); 		y--;	direction = 1; 	break;
+				case 2: //printf("2 : ");//west
+						forward(pattern); 		y++;	direction = 2; 	break;
+				default: //printf("3 : ");//south
+						forward(pattern); 		x++;	direction = 3; 	break;
+			}
+		}else if(b<a && b<c){ //go left
+			switch(direction){
+				case 0: //printf("0 : ");//north
+						turn_left(); 	forward(pattern);	y--;	direction = 1;	break;
+				case 1: //printf("1 : ");//east
+						turn_left(); 	forward(pattern);	x++;	direction = 3; 	break;
+				case 2: //printf("2 : ");//west
+						turn_left(); 	forward(pattern);	x--;	direction = 0; 	break;
+				default: //printf("3 : ");//south
+						turn_left(); 	forward(pattern);	y++;	direction = 2; 	break;
+			}
+		}else{ //go right
+			switch(direction){
+				case 0: //printf("0 : ");//north
+						turn_right(); forward(pattern);		y++;	direction = 2;	break;
+				case 1: //printf("1 : ");//east
+						turn_right(); forward(pattern);		x--;	direction = 0; 	break;
+				case 2: //printf("2 : ");//west
+						turn_right(); forward(pattern);		x++;	direction = 3; 	break;
+				default: //printf("3 : ");//south
+						turn_right(); forward(pattern);		y--;	direction = 1; 	break;
+			}
+		}
+	}
+	else{
+		switch(direction){
+			case 0: //printf("0 : ");//north
+					forward(pattern); 		x--;	direction = 0;	break;
+			case 1: //printf("1 : ");//east
+					forward(pattern); 		y--;	direction = 1; 	break;
+			case 2: //printf("2 : ");//west
+					forward(pattern); 		y++;	direction = 2; 	break;
+			default: //printf("3 : ");//south
+					forward(pattern); 		x++;	direction = 3; 	break;
+		}
+
+	}
+}
+
+void checkpatndi(){
+	switch(direction){
+		case 0: //printf("0 : ");//north
+			switch(pattern){
+				case 0:	min3way(car[x-1][y],car[x][y-1],car[x][y+1]);break;
+				case 1:	min2way(car[x][y-1],car[x][y+1]);break;
+				case 2: min2way(car[x-1][y],car[x][y+1]);break;
+				case 4: min2way(car[x-1][y],car[x][y-1]);break;
+				case 3: turn_right(); forward(pattern);				y++;	direction = 2;break;//front+left
+				case 5: turn_left(); 	forward(pattern);			  y--;	direction = 1;break;//front+right
+				case 6: min2way(car[x - 1][y], car[x + 1][y]); break;//left+right
+				default:  turn_left();turn_left();forward(pattern); 				x++;	direction = 3;break;//front+left+right
+			}break;
+		case 1:	//printf("1 : ");//east
+			switch(pattern){
+				case 0: min3way(car[x][y-1],car[x+1][y],car[x-1][y]);break;
+				case 1: min2way(car[x+1][y],car[x-1][y]);break;
+				case 2: min2way(car[x][y-1],car[x-1][y]);break;
+				case 4: min2way(car[x][y-1],car[x+1][y]);break;
+				case 3: turn_right(); forward(pattern);				x--;	direction = 0; 	break;//front+left
+				case 5: turn_left(); 	forward(pattern);			x++;	direction = 3; 	break;//front+right
+				case 6: min2way(car[x][y - 1], car[x][y + 1]); break;//left+right
+				default:  turn_left();turn_left();forward(pattern); 				y++;	direction = 2; 	break;//front+left+right
+			}break;
+		case 2:	//printf("2 : ");//west
+			switch(pattern){
+				case 0: min3way(car[x][y+1],car[x-1][y],car[x+1][y]);break;
+				case 1: min2way(car[x-1][y],car[x+1][y]);break;
+				case 2: min2way(car[x][y+1],car[x+1][y]);break;
+				case 4: min2way(car[x][y+1],car[x-1][y]);break;
+				case 3: turn_right();  forward(pattern);				x++;	direction = 3; 	break;//front+left
+				case 5: turn_left();   forward(pattern);			x--;	direction = 0; 	break;//front+right
+				case 6: min2way(car[x][y + 1], car[x][y - 1]); break;//left+right
+				default:  turn_left();turn_left();forward(pattern); 				y--;	direction = 1; 	break;//front+left+right
+			}break;
+		default: //printf("3 : ");//south
+			switch(pattern){
+				case 0: min3way(car[x+1][y],car[x][y+1],car[x][y-1]);break;
+				case 1: min2way(car[x][y+1],car[x][y-1]);break;
+				case 2: min2way(car[x+1][y],car[x][y-1]);break;
+				case 4: min2way(car[x+1][y],car[x][y+1]);break;
+				case 3: turn_right(); forward(pattern);				y--;	direction = 1; 	break;//front+left
+				case 5: turn_left(); 	forward(pattern);			y++;	direction = 2; 	break;//front+right
+				case 6: min2way(car[x + 1][y], car[x - 1][y]); 	break;//left+right
+				default:  turn_left();turn_left();forward(pattern); 				x--;	direction = 0; 	break;//front+left+right
+			}break;
+	}
 }

@@ -10,7 +10,7 @@
 #define isEmpty(X)    (X->size == 0)
 #define isFull(X)     (X->size == MAX_PEG_SIZE)
 
-
+float bias_motor = 0;
 struct tStackElement
 {
   int value;
@@ -147,10 +147,22 @@ int car1[9][9] =
 		{81, 81, 81, 81, 81, 81, 81, 81, 81},
 		{81, 81, 81, 81, 81, 81, 81, 81, 0}};
 
+int car2[9][9] =
+	{{8, 7, 6, 5, 4, 5, 6, 7, 8}, //0,0   0,1
+	 {7, 6, 5, 4, 3, 4, 5, 6, 7}, //1,0
+	 {6, 5, 4, 3, 2, 3, 4, 5, 6},
+	 {5, 4, 3, 2, 1, 2, 3, 4, 5},
+	 {4, 3, 2, 1, 0, 1, 2, 3, 4},
+	 {5, 4, 3, 2, 1, 2, 3, 4, 5},
+	 {6, 5, 4, 3, 2, 3, 4, 5, 6},
+	 {7, 6, 5, 4, 3, 4, 5, 6, 7},
+	 {8, 7, 6, 5, 4, 5, 6, 7, 8}};
 
 int x = 8, y = 8;
 int endx = 4, endy = 4;
 
+int avalblock = 0;
+int pathblock = 0;
 int pattern = 0;
 int direction = 0;
 
@@ -158,7 +170,8 @@ void checkwall();
 void min2way(int a, int b);
 void checkpatndi();
 void min3way(int a, int b, int c);
-
+void changemap1();
+void countava();
 
 void forward(int i) {
 	resetGyro(S3);
@@ -172,7 +185,7 @@ void forward(int i) {
 	int avg_encoder = 0;
 	int pid = 0;
 
-	while (avg_encoder < 620) {
+	while (avg_encoder < 625) {
 		encoder_L = getMotorEncoder(motorD);
 		encoder_R = getMotorEncoder(motorA);
 		Ultra_R = SensorValue[S1];
@@ -181,12 +194,10 @@ void forward(int i) {
 		gyro = getGyroDegrees(S3);
 		last_error = error;
 
-		if (i == 6) {
-			error = (Ultra_L - Ultra_R) >= 1 ? 1 : error;
-			error = (Ultra_L - Ultra_R) < 0 ? -1 : error;
-			pid = gyro * 1 + error * 0.5;
-			} else {
-			pid = 0;
+		if (i == 6 && SensorValue[S4] < 15 && SensorValue[S4] < 15) {
+			pid = error * 5;
+		} else {
+			pid = gyro * 1;
 		}
 
 		sum_error += error;
@@ -194,14 +205,16 @@ void forward(int i) {
 		//displayTextLine(0,"%d",encoder_L);
 		//displayTextLine(1,"%d",encoder_R);
 		pid = pid > 5 ? 5 : pid;
-		setMotorSpeed(motorA, 30 + pid);
-		setMotorSpeed(motorD, 30 + pid * (-1));
+		bias_motor = bias_motor >= 30 ? 30:bias_motor;
+		setMotorSpeed(motorA, bias_motor + pid);
+		setMotorSpeed(motorD, bias_motor + pid * (-1));
+		bias_motor+=0.05;
 	}
 	setMotorSpeed(motorA, 0);
 	setMotorSpeed(motorD, 0);
 	if(SensorValue[S2] < 18 && SensorValue[S2] != 10){
 		for(int x = 0 ; x < 8000 ; x++){
-			int k = (10 - SensorValue[S2]) * (-3);
+			int k = (8 - SensorValue[S2]) * (-3);
 			setMotorSpeed(motorA, k);
 			setMotorSpeed(motorD, k);
 		}
@@ -217,11 +230,23 @@ void turn_left() {
 	for (int i = 0 ; i < 10000 ; i++) {
 		x_error = gyro;
 		y_error += gyro;
-		gyro = 86 + getGyroDegrees(S3);
-		pid = gyro * 0.5 + (gyro - x_error) * 10;
+		gyro = 87 + getGyroDegrees(S3);
+		pid = gyro * 0.5 + (gyro - x_error) * 15;
 		setMotorSpeed(motorA, pid);
 		setMotorSpeed(motorD, pid * (-1));
 	}
+
+	setMotorSpeed(motorA, 0);
+	setMotorSpeed(motorD, 0);
+	if(SensorValue[S2] < 18 && SensorValue[S2] != 10){
+		for(int x = 0 ; x < 8000 ; x++){
+			int k = (8 - SensorValue[S2]) * (-3);
+			setMotorSpeed(motorA, k);
+			setMotorSpeed(motorD, k);
+		}
+	}
+	setMotorSpeed(motorA, 0);
+	setMotorSpeed(motorD, 0);
 
 }
 
@@ -231,11 +256,22 @@ void turn_right() {
 	for (int i = 0 ; i < 10000 ; i++) {
 		x_error = gyro;
 		y_error += gyro;
-		gyro = -86 + getGyroDegrees(S3);
-		pid = gyro * 0.5 + (gyro - x_error) * 10;
+		gyro = -87 + getGyroDegrees(S3);
+		pid = gyro * 0.5 + (gyro - x_error) * 15;
 		setMotorSpeed(motorA, pid);
 		setMotorSpeed(motorD, pid * (-1));
 	}
+	setMotorSpeed(motorA, 0);
+	setMotorSpeed(motorD, 0);
+	if(SensorValue[S2] < 18 && SensorValue[S2] != 10){
+		for(int x = 0 ; x < 8000 ; x++){
+			int k = (8 - SensorValue[S2]) * (-3);
+			setMotorSpeed(motorA, k);
+			setMotorSpeed(motorD, k);
+		}
+	}
+	setMotorSpeed(motorA, 0);
+	setMotorSpeed(motorD, 0);
 }
 
 
@@ -304,16 +340,65 @@ task main()
 
 
 
+	if(direction == 3){
+		turn_left();
+		turn_left();
+		direction = 0;
+	}else if(direction == 2){
+		turn_left();
+		direction = 0;
+	}
 
-	turn_left();
-	turn_left();
 	setMotorSpeed(motorA, 0);
 	setMotorSpeed(motorD, 0);
 	beep(10);
 
+	x = 8;
+	y = 8;
+	endx = 4;
+	endy = 4;
+	for (int i = 0; i < 10; i++)
+	{
+		changemap1();
+	}
+	for (int i = 0; i < 9; i++)
+	{
+		for (int j = 0; j < 9; j++)
+		{
+			car[i][j] = car2[i][j];
+		}
+	}
+
+	while (x != endx || y != endy)
+	{
+		pattern = 0;
+		checkwall();
+		pushstack();
+		checkstack();
+		checkpatndi();
+		pathblock += 1;
+	}
+	countava();
+	setMotorSpeed(motorA, 0);
+	setMotorSpeed(motorD, 0);
+	beep(20);
+
 
 	////////////////////////////////////////////
+}
 
+void countava()
+{
+	for (int i = 0; i < 9; i++)
+	{
+		for (int j = 0; j < 9; j++)
+		{
+			if (ava[i][j] == 1)
+			{
+				avalblock += 1;
+			}
+		}
+	}
 }
 
 
@@ -1037,6 +1122,90 @@ void changemap()
 		for (int j = 0; j < 9; j++)
 		{
 			car[i][j] = car1[i][j];
+		}
+	}
+}
+
+void changemap1()
+{
+	int checkw = 0;
+	for (int i = 0; i < 9; i++)
+	{
+		for (int j = 0; j < 9; j++)
+		{
+			checkw = 0;
+			if (wallhorimem[i][j] == 1)
+			{
+				checkw += 1; //#front
+			}
+			if (wallvertmem[i][j] == 1)
+			{
+				checkw += 2; //#left
+			}
+			if (wallvertmem[i][j + 1] == 1)
+			{
+				checkw += 4; //#right
+			}
+			if (wallhorimem[i + 1][j] == 1)
+			{
+				checkw += 8; //#front
+			}
+			switch (checkw)
+			{
+			case 0: //front,left,right,back
+				car2[i][j] = min4(car2[i - 1][j], car2[i][j - 1],
+								  car2[i][j + 1], car2[i + 1][j]);
+				break;
+			case 1: //left,right,back
+				car2[i][j] = min3(car2[i][j - 1], car2[i][j + 1], car2[i + 1][j]);
+				break;
+			case 2: //front,right,back
+				car2[i][j] = min3(car2[i - 1][j], car2[i][j + 1], car2[i + 1][j]);
+				break;
+			case 3: //back,right
+				car2[i][j] = min2(car2[i][j + 1], car2[i + 1][j]);
+				break;
+			case 4: //front,left,back
+				car2[i][j] = min3(car2[i - 1][j], car2[i][j - 1], car2[i + 1][j]);
+				break;
+			case 5: //left,back
+				car2[i][j] = min2(car2[i][j - 1], car2[i + 1][j]);
+				break;
+			case 6: //front,back
+				car2[i][j] = min2(car2[i - 1][j], car2[i + 1][j]);
+				break;
+			case 7: //back
+				car2[i][j] = car2[i + 1][j] + 1;
+				break;
+			case 8: //front,left,right
+				car2[i][j] = min3(car2[i - 1][j], car2[i][j - 1], car2[i][j + 1]);
+				break;
+			case 9: //left,right
+				car2[i][j] = min2(car2[i][j - 1], car2[i][j + 1]);
+				break;
+			case 10: //front,right
+				car2[i][j] = min2(car2[i - 1][j], car2[i][j + 1]);
+				break;
+			case 11: //right
+				car2[i][j] = car2[i][j + 1] + 1;
+				break;
+			case 12: //front,left
+				car2[i][j] = min2(car2[i - 1][j], car2[i][j - 1]);
+				break;
+			case 13: //left
+				car2[i][j] = car2[i][j - 1] + 1;
+				break;
+			case 14: //front
+				car2[i][j] = car2[i - 1][j] + 1;
+				break;
+			default: //no
+				car2[i][j] = 81;
+				break;
+			}
+			if (i == 4 && j == 4)
+			{
+				car2[4][4] = 0;
+			}
 		}
 	}
 }

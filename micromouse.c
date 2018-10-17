@@ -193,11 +193,12 @@ void forward(int i) {
 		Ultra_F = SensorValue[S2];
 		gyro = getGyroDegrees(S3);
 		last_error = error;
-
-		if (i == 6 && SensorValue[S4] < 15 && SensorValue[S4] < 15) {
-			pid = error * 5;
-		} else {
-			pid = gyro * 1;
+		error = gyro;
+		if (i == 6 && Ultra_L < 15 && Ultra_R < 15) {
+			pid = pid > 6 ? 6:pid;
+			pid = (Ultra_L - Ultra_R) * 1 + gyro*2;
+		}else{
+				pid = gyro*2;
 		}
 
 		sum_error += error;
@@ -231,7 +232,7 @@ void turn_left() {
 		x_error = gyro;
 		y_error += gyro;
 		gyro = 87 + getGyroDegrees(S3);
-		pid = gyro * 0.5 + (gyro - x_error) * 15;
+		pid = gyro * 0.5 + (gyro - x_error) * 30;
 		setMotorSpeed(motorA, pid);
 		setMotorSpeed(motorD, pid * (-1));
 	}
@@ -257,7 +258,7 @@ void turn_right() {
 		x_error = gyro;
 		y_error += gyro;
 		gyro = -87 + getGyroDegrees(S3);
-		pid = gyro * 0.5 + (gyro - x_error) * 15;
+		pid = gyro * 0.5 + (gyro - x_error) * 30;
 		setMotorSpeed(motorA, pid);
 		setMotorSpeed(motorD, pid * (-1));
 	}
@@ -274,7 +275,11 @@ void turn_right() {
 	setMotorSpeed(motorD, 0);
 }
 
-
+void printmap(){
+	for(int i = 0 ; i < 9 ; i++){
+		displayTextLine(i,"%d %d %d %d %d %d %d %d %d %d",car[i][0],car[i][1],car[i][2],car[i][3],car[i][4],car[i][5],car[i][6],car[i][7],car[i][8]);
+	}
+}
 task main()
 {
 	///////////////////////////////////////////
@@ -290,9 +295,7 @@ task main()
 
 	while (x != endx || y != endy) {
 
-		for(int a = 0; a < 9; a++){
-			displayTextLine(a,"%d %d %d %d %d %d %d %d",ava[a][0],ava[a][1],ava[a][2],ava[a][3],ava[a][4],ava[a][5],ava[a][6],ava[a][7],ava[a][8]);
-		}
+		//displayBigTextLine(0,"%d",avalblock);
 
 		beep(1);
 		Ultra_R = SensorValue[S1];
@@ -306,14 +309,19 @@ task main()
 		pushstack();
 		checkstack();
 		checkpatndi();
+		//displayBigTextLine(2,"%d",direction);
+		//displayBigTextLine(4,"%d",pattern);
+		printmap();
 
 	}
 	clear(&x1);
 	clear(&y1);
 	clear(&x2);
 	clear(&y2);
-	changemap();
-	changemap();
+	for(int k = 0; k < 10 ; k++){
+		changemap();
+	}
+	//changemap();
 	//printcar();
 	x = 4;
 	y = 4;
@@ -321,9 +329,12 @@ task main()
 	endy = 8;
 	push(&x1,x);
 	push(&y1,y);
+	printmap();
 
 	while (x != endx || y != endy)
 	{
+
+		//displayBigTextLine(0,"%d",avalblock);
 		beep(1);
 		Ultra_R = SensorValue[S1];
 		Ultra_L = SensorValue[S4];
@@ -336,6 +347,10 @@ task main()
 		pushstack();
 		checkstack();
 		checkpatndi();
+		//displayBigTextLine(2,"%d",direction);
+		//displayBigTextLine(4,"%d",pattern);
+		printmap();
+
 	}
 
 
@@ -357,6 +372,7 @@ task main()
 	y = 8;
 	endx = 4;
 	endy = 4;
+
 	for (int i = 0; i < 10; i++)
 	{
 		changemap1();
@@ -368,20 +384,30 @@ task main()
 			car[i][j] = car2[i][j];
 		}
 	}
+	printmap();
+
 
 	while (x != endx || y != endy)
 	{
+		//displayBigTextLine(0,"%d",avalblock);
+
 		pattern = 0;
 		checkwall();
 		pushstack();
 		checkstack();
 		checkpatndi();
 		pathblock += 1;
+		//displayBigTextLine(2,"%d",direction);
+		//displayBigTextLine(4,"%d",pattern);
+		printmap();
+
 	}
 	countava();
 	setMotorSpeed(motorA, 0);
 	setMotorSpeed(motorD, 0);
 	beep(20);
+	//displayBigTextLine(0,"%d",avalblock);
+	sleep(10000);
 
 
 	////////////////////////////////////////////
@@ -422,7 +448,6 @@ void checkwall() {
 			sleep(100);
 
 		}
-		sleep(200);
 		if (Ultra_L < 14) {
 			//printf("0 : have a left wall\n");
 			wallvertmem[x][y] = 1;
@@ -432,7 +457,6 @@ void checkwall() {
 			setMotorSpeed(motorB, 0);
 			sleep(100);
 		}
-		sleep(200);
 		if (Ultra_R < 14) {
 			//printf("0 : have a right wall\n");
 			wallvertmem[x][y + 1] = 1;
@@ -441,55 +465,97 @@ void checkwall() {
 			sleep(100);
 			setMotorSpeed(motorC, 0);
 			sleep(100);
-		} sleep(200); break;
+		} break;
 	case 1 : //east
 		if (Ultra_F < 15) {
 			//printf("1 : have a front wall\n");
 			wallvertmem[x][y] = 1;
 			pattern += 1 ; //#front
+			setMotorSpeed(motorC, 100);
+			setMotorSpeed(motorB, 100);
+			sleep(100);
+			setMotorSpeed(motorC, 0);
+			setMotorSpeed(motorB, 0);
+			sleep(100);
 		}
 		if (Ultra_L < 14) {
 			//printf("1 : have a left wall\n");
 			wallhorimem[x + 1][y] = 1;
 			pattern += 2 ; //#left
+			setMotorSpeed(motorB, 100);
+			sleep(100);
+			setMotorSpeed(motorB, 0);
+			sleep(100);
 		}
 		if (Ultra_R < 14) {
 			//printf("1 : have a right wall\n");
 			wallhorimem[x][y] = 1;
 			pattern += 4 ; //#right
+			setMotorSpeed(motorC, 100);
+			sleep(100);
+			setMotorSpeed(motorC, 0);
+			sleep(100);
 		} break;
 	case 2 : //west
 		if (Ultra_F < 15) {
 			//printf("2 : have a front wall\n");
 			wallvertmem[x][y + 1] = 1;
 			pattern += 1 ; //#front
+			setMotorSpeed(motorC, 100);
+			setMotorSpeed(motorB, 100);
+			sleep(100);
+			setMotorSpeed(motorC, 0);
+			setMotorSpeed(motorB, 0);
+			sleep(100);
 		}
 		if (Ultra_L < 14) {
 			//printf("2 : have a left wall\n");
 			wallhorimem[x][y] = 1;
 			pattern += 2 ; //#left
+			setMotorSpeed(motorB, 100);
+			sleep(100);
+			setMotorSpeed(motorB, 0);
+			sleep(100);
 
 		}
 		if (Ultra_R < 14) {
 			//printf("2 : have a right wall\n");
 			wallhorimem[x + 1][y] = 1;
 			pattern += 4 ; //#right
+			setMotorSpeed(motorC, 100);
+			sleep(100);
+			setMotorSpeed(motorC, 0);
+			sleep(100);
 		} break;
 	default : //south
 		if (Ultra_F < 14) {
 			//printf("3 : have a front wall\n");
 			wallhorimem[x + 1][y] = 1;
 			pattern += 1 ; //#front
+			setMotorSpeed(motorC, 100);
+			setMotorSpeed(motorB, 100);
+			sleep(100);
+			setMotorSpeed(motorC, 0);
+			setMotorSpeed(motorB, 0);
+			sleep(100);
 		}
 		if (Ultra_L < 14) {
 			//printf("3 : have a left wall\n");
 			wallvertmem[x][y + 1] = 1;
 			pattern += 2 ; //#left
+			setMotorSpeed(motorB, 100);
+			sleep(100);
+			setMotorSpeed(motorB, 0);
+			sleep(100);
 		}
 		if (Ultra_R < 14) {
 			//printf("3 : have a right wall\n");
 			wallvertmem[x][y] = 1;
 			pattern += 4 ; //#right
+			setMotorSpeed(motorC, 100);
+			sleep(100);
+			setMotorSpeed(motorC, 0);
+			sleep(100);
 		} break;
 	}
 }
@@ -510,7 +576,6 @@ void min2way(int a, int b) {
 				//beep(pattern);
 			case 1: turn_left(); forward(pattern); y--; direction = 1;  break;//left,right
 			case 2: forward(pattern);  x--; direction = 0;  break;//front,right
-			case 6:  forward(pattern); x--; direction = 0; break;
 			default: forward(pattern);   x--; direction = 0;  break;//front,left
 			} break;
 		case 1:   //direction = 1
@@ -519,7 +584,6 @@ void min2way(int a, int b) {
 				//beep(pattern);
 			case 1: turn_left(); forward(pattern);   x++; direction = 3;  break;//left,right
 			case 2: forward(pattern);  y--; direction = 1;  break;//front,right
-			case 6: forward(pattern); y--; direction = 1;  break;
 			default: forward(pattern);   y--; direction = 1;  break;//front,left
 			} break;
 		case 2:   //direction = 2
@@ -528,7 +592,6 @@ void min2way(int a, int b) {
 				//beep(pattern);
 			case 1: turn_left(); forward(pattern);   x--; direction = 0;  break;//left,right
 			case 2: forward(pattern);  y++; direction = 2;  break;//front,right
-			case 6:  forward(pattern); y++; direction = 2; break;
 			default: forward(pattern);   y++; direction = 2;  break;//front,left
 			} break;
 		default:    //direction = 3
@@ -537,7 +600,6 @@ void min2way(int a, int b) {
 				//beep(pattern);
 			case 1: turn_left(); forward(pattern);  y++;  direction = 2;  break;//left,right
 			case 2: forward(pattern);  x++; direction = 3;  break;//front,right
-			case 6: forward(pattern); x++; direction = 3;  break;
 			default: forward(pattern);   x++; direction = 3;  break;//front,left
 			} break;
 		}
@@ -700,8 +762,8 @@ void checkstack()
 		{
 			break;
 		}
-		pop(&x1);
-		pop(&y1);
+		//pop(&x1);
+		//pop(&y1);
 		push(&x2,bufferx);
 		push(&y2,buffery);
 		//printf("(%d,%d) ", bufferx, buffery);
@@ -786,8 +848,8 @@ void checkstack()
 		}
 		bufferx = pop(&x2);
 		buffery = pop(&y2);
-		pop(&x2);
-		pop(&y2);
+		//pop(&x2);
+		//pop(&y2);
 		push(&x1,bufferx);
 		push(&y1,buffery);
 	}
